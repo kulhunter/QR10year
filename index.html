@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2Win - Diagnóstico Empresarial</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- NUEVAS FUENTES PROFESIONALES -->
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,700;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --font-main: 'Lato', sans-serif;
+            --font-quotes: 'Cormorant Garamond', serif;
+        }
+
+        body {
+            background-color: #000;
+            color: #ccc;
+            font-family: var(--font-main);
+            margin: 0;
+            transition: background-color 1s ease;
+        }
+
+        /* --- FONDO ESTRELLADO Y PARALLAX CORREGIDO --- */
+        #stars-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+            overflow: hidden;
+            background: #000;
+        }
+
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            animation: animateStars 50s linear infinite;
+        }
+        
+        @keyframes animateStars {
+            from { transform: translateY(0px); }
+            to { transform: translateY(-2000px) scale(1.5); opacity: 0; }
+        }
+
+        #parallax-bg {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('https://images.unsplash.com/photo-1488866022504-f2584929ca5f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1762&q=80');
+            background-size: cover;
+            background-position: center;
+            z-index: -1;
+            filter: brightness(0.4);
+            mask-image: linear-gradient(to top, black 60%, transparent 100%);
+            -webkit-mask-image: linear-gradient(to top, black 60%, transparent 100%);
+        }
+
+        header {
+            position: fixed;
+            top: 2rem;
+            left: 2rem;
+            z-index: 100;
+        }
+
+        #logo {
+            width: 120px;
+            height: auto;
+        }
+
+        .section {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 2rem;
+            box-sizing: border-box;
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+        }
+
+        .section.active {
+            opacity: 1;
+        }
+
+        .tombstone {
+            font-family: var(--font-quotes);
+            min-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            max-width: 700px;
+            opacity: 0;
+            transform: translateY(50px);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+
+        .tombstone.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .tombstone blockquote {
+            font-size: clamp(2rem, 5vw, 3rem);
+            margin: 0;
+            color: #fff;
+            font-weight: 700;
+            font-style: italic;
+        }
+
+        .tombstone footer {
+            font-size: clamp(1rem, 2.5vw, 1.2rem);
+            margin-top: 1.5rem;
+            color: #888;
+            font-family: var(--font-main);
+        }
+
+        .final-message {
+             font-size: clamp(1.2rem, 3vw, 2rem);
+             font-weight: 700;
+             max-width: 800px;
+             font-family: var(--font-main);
+        }
+
+        .cta-button {
+            background-color: #fff;
+            color: #000;
+            border: none;
+            padding: 1rem 2.5rem;
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 2rem;
+            border-radius: 5px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            text-decoration: none;
+        }
+        .cta-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+        }
+        
+        /* Estilos del Quiz */
+        #quiz-section { display: none; }
+        .question { margin-bottom: 2rem; max-width: 700px; }
+        .question h2 { font-size: clamp(1.5rem, 4vw, 2.2rem); }
+        .options { display: flex; flex-direction: column; gap: 1rem; margin-top: 1.5rem; }
+        .option {
+            background: #222;
+            border: 1px solid #444;
+            padding: 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.2s ease, border-color 0.2s ease;
+        }
+        .option:hover { background: #333; border-color: #666; }
+        .option.selected { background: #eee; color: #000; border-color: #fff; }
+
+        /* Estilos de Resultados */
+        #results-section { display: none; }
+        #results-section h2 { font-size: 2.5rem; }
+        #results-text { font-size: 1.5rem; margin-top: 1rem; }
+        #chart-container { width: 100%; max-width: 400px; margin-top: 2rem; }
+        
+        #final-alert {
+            margin-top: 3rem;
+            max-width: 700px;
+            font-size: 1.2rem;
+            line-height: 1.6;
+            font-weight: 400;
+        }
+
+        #back-to-top {
+            margin-top: 1.5rem;
+            color: #888;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.2s ease;
+        }
+        #back-to-top:hover {
+            color: #fff;
+        }
+        
+        /* --- WIDGET FLOTANTE DE AGENDA --- */
+        #agenda-widget {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 1000;
+            text-align: right;
+        }
+        #agenda-widget-btn {
+            background: #fff;
+            color: #000;
+            border: none;
+            border-radius: 50px;
+            padding: 0.8rem 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+        #agenda-widget-content {
+            display: none;
+            margin-top: 1rem;
+        }
+        #agenda-widget-content a {
+            display: block;
+            background: #1a1a1a;
+            color: #fff;
+            padding: 1rem;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 700;
+        }
+
+    </style>
+</head>
+<body>
+    <div id="stars-container"></div>
+    <div id="parallax-bg"></div>
+
+    <header>
+        <img id="logo" src="https://sp-ao.shortpixel.ai/client/to_webp,q_lossy,ret_img,w_100,h_36/https://2win.cl/wp-content/uploads/2025/07/logo-2win.png" alt="Logo 2Win">
+    </header>
+
+    <div id="landing-section" class="section active">
+        <div class="tombstone">
+            <blockquote>"Vendimos más que nunca. Pero cerramos el año con pérdidas."</blockquote>
+            <footer>– Gerente de operaciones, 2015</footer>
+        </div>
+        <div class="tombstone">
+            <blockquote>"El reporte de ventas decía una cosa, el de finanzas otra. Nadie sabía cuál era el real."</blockquote>
+            <footer>– Analista Financiero, 2016</footer>
+        </div>
+        <div class="tombstone">
+            <blockquote>"Perdimos a nuestro mejor cliente por un error de inventario que nadie vio."</blockquote>
+            <footer>– Jefe de Logística, 2017</footer>
+        </div>
+        <div class="tombstone">
+            <blockquote>"Tuvimos tres versiones del mismo inventario. Nadie supo cuál era la real."</blockquote>
+            <footer>– CFO anónimo, 2018</footer>
+        </div>
+        <div class="tombstone">
+            <blockquote>"Aprobamos un presupuesto basado en proyecciones de Excel que estaban mal formuladas."</blockquote>
+            <footer>– Directorio, 2019</footer>
+        </div>
+        <div class="tombstone">
+            <blockquote>"La pandemia nos obligó a vender online, pero no teníamos idea de nuestros márgenes por canal."</blockquote>
+            <footer>– Gerente Comercial, 2020</footer>
+        </div>
+        <div class="tombstone">
+            <blockquote>"Nuestra empresa murió por algo que estaba en un Excel."</blockquote>
+            <footer>– Emprendedor, 2021</footer>
+        </div>
+        <div class="tombstone">
+            <blockquote>"Teníamos los datos, pero estaban en tantos lugares que no pudimos tomar la decisión a tiempo."</blockquote>
+            <footer>– CEO, 2022</footer>
+        </div>
+        <div class="tombstone">
+            <blockquote>"Competíamos contra algoritmos usando la intuición."</blockquote>
+            <footer>– Fundador, 2023</footer>
+        </div>
+        <div class="tombstone">
+            <blockquote>"Mientras nosotros debatíamos, la competencia automatizó."</blockquote>
+            <footer>– Gerente de TI, 2024</footer>
+        </div>
+         <div class="tombstone">
+            <blockquote>"La IA no nos reemplazó. Nos reemplazaron empresas que sí la usaban con datos ordenados."</blockquote>
+            <footer>– Ex-Gerente General, 2025</footer>
+        </div>
+        <div class="tombstone final-message">
+            <p>Estas historias no tienen por qué ser la tuya.<br>Descubre si estás a tiempo de cambiar el rumbo.</p>
+            <button class="cta-button" id="start-quiz-btn">Hacer el diagnóstico</button>
+        </div>
+    </div>
+
+    <div id="quiz-section" class="section">
+        <div class="question" id="question-container">
+            <!-- Las preguntas se cargarán aquí -->
+        </div>
+    </div>
+
+    <div id="results-section" class="section">
+        <h2>La temperatura de tu empresa es:</h2>
+        <p id="results-text">Calculando...</p>
+        <div id="chart-container">
+            <canvas id="temp-chart"></canvas>
+        </div>
+        <div id="final-alert">
+             <!-- El texto de alerta se cargará aquí -->
+        </div>
+        <a href="https://2win.cl/contacto" target="_blank" class="cta-button" id="contact-btn" style="display: none;">El futuro es ahora, conversemos</a>
+        <a href="#landing-section" id="back-to-top" style="display: none;">Volver al inicio</a>
+    </div>
+
+    <div id="agenda-widget">
+        <button id="agenda-widget-btn">¿Necesitas un asesor?</button>
+        <div id="agenda-widget-content">
+            <a href="https://calendly.com/aline-kipper-2win/soluciones-2win" target="_blank">Agenda una reunión</a>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- Lógica del Fondo Estrellado ---
+            const starsContainer = document.getElementById('stars-container');
+            for (let i = 0; i < 100; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.width = `${Math.random() * 2 + 1}px`;
+                star.style.height = star.style.width;
+                star.style.top = `${Math.random() * 100}%`;
+                star.style.left = `${Math.random() * 100}%`;
+                star.style.animationDelay = `${Math.random() * 50}s`;
+                star.style.animationDuration = `${Math.random() * 50 + 50}s`;
+                starsContainer.appendChild(star);
+            }
+
+            // --- Lógica del Parallax ---
+            const parallaxBg = document.getElementById('parallax-bg');
+            window.addEventListener('scroll', () => {
+                const offset = window.pageYOffset;
+                parallaxBg.style.transform = `translateY(${offset * 0.3}px)`;
+            });
+
+            // --- Lógica para animar las lápidas al hacer scroll ---
+            const tombstones = document.querySelectorAll('.tombstone');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                    } else {
+                        entry.target.classList.remove('visible');
+                    }
+                });
+            }, { threshold: 0.8 }); 
+            tombstones.forEach(tombstone => observer.observe(tombstone));
+
+            // --- Lógica del Widget Flotante ---
+            const agendaBtn = document.getElementById('agenda-widget-btn');
+            const agendaContent = document.getElementById('agenda-widget-content');
+            agendaBtn.addEventListener('click', () => {
+                const isHidden = agendaContent.style.display === 'none' || agendaContent.style.display === '';
+                agendaContent.style.display = isHidden ? 'block' : 'none';
+            });
+
+            // --- Lógica del Quiz ---
+            const startBtn = document.getElementById('start-quiz-btn');
+            const landingSection = document.getElementById('landing-section');
+            const quizSection = document.getElementById('quiz-section');
+            const resultsSection = document.getElementById('results-section');
+            const questionContainer = document.getElementById('question-container');
+            const finalAlert = document.getElementById('final-alert');
+            const contactBtn = document.getElementById('contact-btn');
+            const backToTopBtn = document.getElementById('back-to-top');
+
+            const questions = [
+                {
+                    question: "¿Con qué frecuencia tus reportes gerenciales se basan en planillas Excel?",
+                    options: [
+                        { text: "Siempre, es nuestra principal herramienta.", value: 20 },
+                        { text: "A menudo, para complementar el sistema.", value: 15 },
+                        { text: "Rara vez, solo para análisis puntuales.", value: 10 },
+                        { text: "Nunca, todo está integrado en nuestro ERP.", value: 0 }
+                    ]
+                },
+                {
+                    question: "Cuando necesitas un dato clave (ej. inventario, ventas), ¿cuánto tardas en obtener una respuesta confiable?",
+                    options: [
+                        { text: "Horas o días, debo consultar a varias personas.", value: 20 },
+                        { text: "Algunos minutos, debo cruzar un par de reportes.", value: 15 },
+                        { text: "Es casi instantáneo, pero debo verificarlo.", value: 10 },
+                        { text: "Es instantáneo y 100% confiable desde un solo sistema.", value: 0 }
+                    ]
+                },
+                {
+                    question: "¿Tu equipo comercial puede ver el stock de un producto en tiempo real antes de cerrar una venta?",
+                    options: [
+                        { text: "No, se basan en reportes diarios o semanales.", value: 20 },
+                        { text: "Tienen que llamar o preguntar a bodega.", value: 15 },
+                        { text: "Sí, pero el dato a veces tiene desfase.", value: 10 },
+                        { text: "Sí, en tiempo real y desde cualquier dispositivo.", value: 0 }
+                    ]
+                },
+                {
+                    question: "¿Cómo describirías el proceso de cierre de mes contable?",
+                    options: [
+                        { text: "Caótico y estresante. Nos toma más de una semana.", value: 20 },
+                        { text: "Largo y manual. Requiere muchas validaciones.", value: 15 },
+                        { text: "Es ordenado, pero aún nos toma varios días.", value: 10 },
+                        { text: "Rápido y automatizado. Cerramos en un par de días.", value: 0 }
+                    ]
+                },
+                {
+                    question: "Si las ventas aumentan un 20%, ¿sientes que tienes el control o que la operación podría colapsar?",
+                    options: [
+                        { text: "Definitivamente colapsaría. Más ventas, más problemas.", value: 20 },
+                        { text: "Tendríamos serios problemas para cumplir.", value: 15 },
+                        { text: "Lo soportaríamos, pero con mucho esfuerzo manual.", value: 10 },
+                        { text: "Estamos preparados. Nuestro sistema escala con nosotros.", value: 0 }
+                    ]
+                }
+            ];
+
+            // --- NUEVOS TEXTOS DE ALERTA GRANULARES ---
+            const alertMessages = [
+                { maxScore: 5,  title: "Temperatura Polar", message: "Tu base es sólida. La IA y las nuevas tecnologías serán tus aliadas para acelerar aún más. Estás listo para liderar el futuro." },
+                { maxScore: 10, title: "Temperatura Fría", message: "Excelente control. Tienes los cimientos para que la IA potencie tu crecimiento, no para que te genere problemas." },
+                { maxScore: 15, title: "Temperatura Fresca", message: "Buena temperatura. Aún así, la tecnología avanza. Asegúrate de que tus procesos sigan siendo ágiles para no enfriarte." },
+                { maxScore: 20, title: "Temperatura Ideal", message: "Estás en la zona ideal. Tu desafío es mantenerte aquí mientras la IA redefine los mercados. La optimización continua es clave." },
+                { maxScore: 25, title: "Temperatura Templada", message: "Operación estable, pero con los primeros síntomas de calor. Es el momento perfecto para automatizar antes de que surjan problemas." },
+                { maxScore: 30, title: "Temperatura Agradable", message: "La comodidad es peligrosa. La competencia ya está usando IA para ser más eficiente. No te quedes atrás." },
+                { maxScore: 35, title: "Temperatura Tibia", message: "Empiezas a sentir el calor. Procesos manuales que hoy son manejables, mañana serán cuellos de botella." },
+                { maxScore: 40, title: "Temperatura Cálida", message: "La temperatura sube. Depender de la intuición en la era de los datos es un riesgo que crece cada día." },
+                { maxScore: 45, title: "Temperatura Caliente", message: "Se sienten los primeros focos de calor. La falta de un sistema integrado te hace vulnerable a errores costosos." },
+                { maxScore: 50, title: "Temperatura Muy Caliente", message: "Estás a tiempo, pero por poco. Ordenar tus datos ahora es crucial para que la IA no se convierta en una amenaza." },
+                { maxScore: 55, title: "Temperatura Ardiendo", message: "La operación empieza a quemar recursos. La IA, sin datos fiables, solo amplificará el caos." },
+                { maxScore: 60, title: "Temperatura con Fiebre", message: "La temperatura es alta. Tu equipo probablemente ya siente el desgaste de la ineficiencia." },
+                { maxScore: 65, title: "Alerta Naranja", message: "Sin una base de datos sólida, la IA podría tomar decisiones erróneas y costosas. Es momento de actuar." },
+                { maxScore: 70, title: "Zona de Peligro", message: "Estás en una zona de alto riesgo. La tecnología avanza más rápido que tus procesos actuales." },
+                { maxScore: 75, title: "Estado Crítico", message: "La falta de control ya no es una opción. Cada día sin un sistema robusto es una oportunidad perdida y un riesgo ganado." },
+                { maxScore: 80, title: "Estado de Emergencia", message: "La catástrofe es evitable, pero la ventana se cierra. La IA avanza y las empresas sin control se quedarán atrás." },
+                { maxScore: 85, title: "Alerta Roja", message: "Tu empresa está sobrecalentada. Los errores manuales y la falta de visibilidad te están costando más de lo que crees." },
+                { maxScore: 90, title: "Punto de no retorno", message: "Estás al borde del colapso operativo. La tecnología no es el problema, es la falta de ella." },
+                { maxScore: 95, title: "Modo Crisis", message: "La situación es crítica. Reaccionar ya no es suficiente, necesitas una transformación profunda y urgente." },
+                { maxScore: 100, title: "Fusión del Núcleo", message: "Estás en el punto más alto de riesgo. Cada segundo cuenta. Necesitas ayuda especializada ahora." }
+            ];
+
+            let currentQuestionIndex = 0;
+            let score = 0;
+
+            startBtn.addEventListener('click', () => {
+                landingSection.classList.remove('active');
+                setTimeout(() => {
+                    landingSection.style.display = 'none';
+                    quizSection.style.display = 'flex';
+                    quizSection.classList.add('active');
+                    loadQuestion();
+                }, 1000);
+            });
+            
+            backToTopBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                resultsSection.classList.remove('active');
+                setTimeout(() => {
+                    resultsSection.style.display = 'none';
+                    landingSection.style.display = 'flex';
+                    landingSection.classList.add('active');
+                    window.scrollTo(0, 0);
+                    // Reset quiz
+                    currentQuestionIndex = 0;
+                    score = 0;
+                }, 1000);
+            });
+
+            function loadQuestion() {
+                if (currentQuestionIndex < questions.length) {
+                    const currentQuestion = questions[currentQuestionIndex];
+                    questionContainer.innerHTML = `
+                        <h2>${currentQuestion.question}</h2>
+                        <div class="options">
+                            ${currentQuestion.options.map((opt, i) => `
+                                <div class="option" data-value="${opt.value}">${opt.text}</div>
+                            `).join('')}
+                        </div>
+                    `;
+                    document.querySelectorAll('.option').forEach(option => {
+                        option.addEventListener('click', selectOption);
+                    });
+                } else {
+                    showResults();
+                }
+            }
+
+            function selectOption(e) {
+                score += parseInt(e.target.dataset.value);
+                currentQuestionIndex++;
+                loadQuestion();
+            }
+
+            function showResults() {
+                quizSection.classList.remove('active');
+                setTimeout(() => {
+                    quizSection.style.display = 'none';
+                    resultsSection.style.display = 'flex';
+                    resultsSection.classList.add('active');
+                    
+                    const result = alertMessages.find(m => score <= m.maxScore);
+                    
+                    document.getElementById('results-text').innerText = result.title;
+                    finalAlert.innerText = result.message;
+                    contactBtn.style.display = 'inline-block';
+                    backToTopBtn.style.display = 'inline-block';
+                    
+                    createChart(score);
+                }, 1000);
+            }
+
+            function createChart(score) {
+                const ctx = document.getElementById('temp-chart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Temperatura'],
+                        datasets: [{
+                            label: 'Nivel de Riesgo',
+                            data: [score],
+                            backgroundColor: [score > 80 ? '#ff4d4d' : score > 50 ? '#ffc107' : '#28a745'],
+                            borderColor: ['#fff'],
+                            borderWidth: 2,
+                            borderRadius: 5,
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        scales: {
+                            x: {
+                                beginAtZero: true,
+                                max: 100,
+                                grid: { color: 'rgba(255, 255, 255, 0.2)' },
+                                ticks: { color: '#fff', font: { size: 14, family: "'Lato', sans-serif" } }
+                            },
+                            y: {
+                                grid: { display: false },
+                                ticks: { display: false }
+                            }
+                        },
+                        plugins: {
+                            legend: { display: false }
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
