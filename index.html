@@ -15,6 +15,11 @@
             --font-quotes: 'Cormorant Garamond', serif;
         }
 
+        /* Permite el scroll suave */
+        html {
+            scroll-behavior: smooth;
+        }
+
         body {
             background-color: #000;
             color: #ccc;
@@ -222,6 +227,25 @@
             font-weight: 700;
         }
 
+        /* --- NUEVO BOTÓN FLOTANTE "SALTAR" --- */
+        #skip-to-diag-btn {
+            position: fixed;
+            bottom: 2rem;
+            left: 2rem;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.9);
+            color: #000;
+            padding: 0.8rem 1.2rem;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 700;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+        #skip-to-diag-btn:hover {
+            transform: scale(1.05);
+        }
+
     </style>
 </head>
 <body>
@@ -277,7 +301,8 @@
             <blockquote>"La IA no nos reemplazó. Nos reemplazaron empresas que sí la usaban con datos ordenados."</blockquote>
             <footer>– Ex-Gerente General, 2025</footer>
         </div>
-        <div class="tombstone final-message">
+        <!-- Se añade un ID al contenedor del CTA final para que el botón flotante pueda apuntar aquí -->
+        <div id="final-cta-container" class="tombstone final-message">
             <p>Estas historias no tienen por qué ser la tuya.<br>Descubre si estás a tiempo de cambiar el rumbo.</p>
             <button class="cta-button" id="start-quiz-btn">Hacer el diagnóstico</button>
         </div>
@@ -308,6 +333,8 @@
             <a href="https://calendly.com/aline-kipper-2win/soluciones-2win" target="_blank">Agenda una reunión</a>
         </div>
     </div>
+
+    <a href="#final-cta-container" id="skip-to-diag-btn">Saltar al diagnóstico</a>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -411,7 +438,6 @@
                 }
             ];
 
-            // --- NUEVOS TEXTOS DE ALERTA GRANULARES ---
             const alertMessages = [
                 { maxScore: 5,  title: "Temperatura Polar", message: "Tu base es sólida. La IA y las nuevas tecnologías serán tus aliadas para acelerar aún más. Estás listo para liderar el futuro." },
                 { maxScore: 10, title: "Temperatura Fría", message: "Excelente control. Tienes los cimientos para que la IA potencie tu crecimiento, no para que te genere problemas." },
